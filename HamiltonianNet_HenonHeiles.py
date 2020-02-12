@@ -279,6 +279,10 @@ model,loss,runTime = run_odeNet_HH_MM(X0, t_max,
 print('Training time (minutes):', runTime/60)
 plt.loglog(loss,'-b',alpha=0.975);
 plt.tight_layout()
+plt.ylabel('Loss');plt.xlabel('t')
+
+#plt.savefig('../results/HenonHeiles_loss.png')
+plt.savefig('HenonHeiles_loss.png')
 
 
 # TEST THE PREDICTED SOLUTIONS
@@ -297,58 +301,77 @@ E  = energy(x, y, px, py, lam)
 ###################
 # Symplectic Euler
 ####################
-Ns = n_train;
-# Ns = 10*n_train;
-t_s = np.linspace(t0, t_max, Ns+1)
-dts = t_max/Ns
-
-x_s = np.zeros(Ns+1); px_s = np.zeros(Ns+1);
-y_s = np.zeros(Ns+1); py_s = np.zeros(Ns+1)
-
-x_s[0], px_s[0], y_s[0], py_s[0] = x0,  px0,y0, py0
-for n in range(Ns):
-    x_s[n+1] = x_s[n] + dts*px_s[n]
-    y_s[n+1] = y_s[n] + dts*py_s[n]
+def symEuler(Ns, x0,px0,t_max,lam):        
+    t_s = np.linspace(t0, t_max, Ns+1)
+    dts = t_max/Ns
     
-    px_s[n+1] = px_s[n] - dts*(x_s[n+1] + 2*lam*x_s[n+1]*y_s[n+1])
-    py_s[n+1] = py_s[n] - dts*(y_s[n+1] + lam*(x_s[n+1]**2-y_s[n+1]**2))    
-E_s = energy( x_s, y_s, px_s, py_s, lam)
+    x_s = np.zeros(Ns+1); px_s = np.zeros(Ns+1);
+    y_s = np.zeros(Ns+1); py_s = np.zeros(Ns+1)
+    
+    x_s[0], px_s[0], y_s[0], py_s[0] = x0,  px0,y0, py0
+    for n in range(Ns):
+        x_s[n+1] = x_s[n] + dts*px_s[n]
+        y_s[n+1] = y_s[n] + dts*py_s[n]
+        
+        px_s[n+1] = px_s[n] - dts*(x_s[n+1] + 2*lam*x_s[n+1]*y_s[n+1])
+        py_s[n+1] = py_s[n] - dts*(y_s[n+1] + lam*(x_s[n+1]**2-y_s[n+1]**2))    
+        E_euler = energy( x_s, y_s, px_s, py_s, lam)
+
+    return E_euler, x_s,y_s, px_s, py_s, t_s
+
+
+
+Ns = n_train;
+E_s, x_s, y_s, px_s, py_s, t_s = symEuler(Ns, x0,px0,t_max,lam)
+Ns100 = 100*n_train ; 
+E_s100, x_s100,y_s100, px_s100,py_s100, t_s100 = symEuler(Ns100, x0,px0,t_max,lam)
 
 
 
 ################
 # Make the plots
 #################
+
+# Figure for trajectories: x(t), p(t), energy in time E(t), 
+#          and phase space trajectory p(x)
+
 lineW = 2 # Line thickness
 
 plt.figure(figsize=(10,8))
 plt.subplot(2,2,1)
-plt.plot(t_num,x_num,'-r',linewidth=lineW, label='Ground truth'); 
+plt.plot(t_num,x_num,'-g',linewidth=lineW, label='Ground truth'); 
 plt.plot(t_net, x,'--b', label='Neural Net'); 
-plt.plot(t_s,x_s,':y',linewidth=lineW, label='Symplectic Euler'); 
+plt.plot(t_s,x_s,':k',linewidth=lineW, label='Symplectic Euler'); 
+plt.plot(t_s100,x_s100,'-.r',linewidth=lineW, label='Symplectic Euler x 100 points'); 
 plt.ylabel('x');plt.xlabel('t')
+plt.legend()
 
 plt.subplot(2,2,2)
-plt.plot(t_num,E_ex,'-r',linewidth=lineW); 
+plt.plot(t_num,E_ex,'-g',linewidth=lineW); 
 plt.plot(t_net, E,'--b')
-plt.plot(t_s,E_s,':y',linewidth=lineW); 
+plt.plot(t_s,E_s,':k',linewidth=lineW); 
+plt.plot(t_s100,E_s100,'-.r',linewidth=lineW); 
 plt.ylabel('E');plt.xlabel('t')
-plt.ylim([0.5*E0,1.5*E0])
+plt.ylim([1.1*E0,0.9*E0])
 
 plt.subplot(2,2,3)
-plt.plot(t_num,px_num,'-r',linewidth=lineW); 
+plt.plot(t_num,px_num,'-g',linewidth=lineW); 
 plt.plot(t_net, px,'--b')
-plt.plot(t_s,px_s,':y',linewidth=lineW); 
+plt.plot(t_s,px_s,':k',linewidth=lineW); 
+plt.plot(t_s100,px_s100,'-.r',linewidth=lineW); 
 plt.ylabel('px');plt.xlabel('t')
 
 plt.subplot(2,2,4)
-plt.plot(x_num,px_num,'-r',linewidth=lineW); 
+plt.plot(x_num,px_num,'-g',linewidth=lineW); 
 plt.plot(x, px,'--b')
-plt.plot(x_s,px_s,'--y',linewidth=lineW); 
-plt.ylabel('p');plt.xlabel('x');
+plt.plot(x_s,px_s,'--k',linewidth=lineW); 
+plt.plot(x_s100,px_s100,'-.r',linewidth=lineW); 
+plt.ylabel('px');plt.xlabel('x');
 
 
 
+#plt.savefig('../results/HenonHeiles_trajectories.png')
+plt.savefig('HenonHeiles_trajectories.png')
 
 
 
